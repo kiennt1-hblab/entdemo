@@ -1,9 +1,11 @@
+Framework
+---
 To install Gin package, you need to install Go and set your Go workspace first.
 You first need Go installed (version 1.16+ is required), then you can use the below Go command to install Gin.
 ```
 go get -u github.com/gin-gonic/gin
 ```
-
+Auto Reload
 ---
 
 Live reload for Go apps.
@@ -16,7 +18,7 @@ to run in terminal
 ```
 air
 ```
-
+Database
 ---
 
 Run the following Go commands to install Ent
@@ -33,9 +35,10 @@ go generate ./ent
 ```
 run every time an entity is edited
 
+Need
 ---
 
-Need: 
+sql driver: 
 ```
 go get -u github.com/go-sql-driver/mysql
 ```

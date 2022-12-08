@@ -28,10 +28,6 @@ func main() {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
-	//a8m, err := CreateCars(ctx, client)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
 	//if err := QueryCars(ctx, a8m); err != nil {
 	//	log.Fatal(err)
 	//}
@@ -56,13 +52,40 @@ func main() {
 		}
 	})
 	router.GET("/query-user", func(c *gin.Context) {
-		u, err := QueryUser(ctx, client)
+		name := c.Query("name")
+		u, err := QueryUser(ctx, client, name)
 		if err != nil {
 			log.Fatal(err)
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"message": u,
 		})
+	})
+	router.POST("/create-car", func(c *gin.Context) {
+		name := c.PostForm("name")
+		a8m, err := CreateCars(ctx, client, name)
+		if err != nil {
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"message": a8m,
+			})
+		}
+	})
+	router.GET("/list-car", func(c *gin.Context) {
+		name := c.Query("name")
+		cars, err := QueryCars(ctx, client, name)
+		if err != nil {
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"message": cars,
+			})
+		}
 	})
 
 	//router.PUT("/somePut", putting)
@@ -90,10 +113,10 @@ func CreateUser(ctx context.Context, client *ent.Client, name string) (*ent.User
 	return u, nil
 }
 
-func QueryUser(ctx context.Context, client *ent.Client) (*ent.User, error) {
+func QueryUser(ctx context.Context, client *ent.Client, name string) (*ent.User, error) {
 	u, err := client.User.
 		Query().
-		Where(user.NameEQ("Ta8m")).
+		Where(user.NameEQ(name)).
 		// `Only` fails if no user found,
 		// or more than 1 user returned.
 		Only(ctx)
@@ -104,11 +127,11 @@ func QueryUser(ctx context.Context, client *ent.Client) (*ent.User, error) {
 	return u, nil
 }
 
-func CreateCars(ctx context.Context, client *ent.Client) (*ent.User, error) {
+func CreateCars(ctx context.Context, client *ent.Client, name string) (*ent.User, error) {
 	// Create a new car with model "Tesla".
 	tesla, err := client.Car.
 		Create().
-		SetModel("Tesla").
+		SetModel(name).
 		SetRegisteredAt(time.Now()).
 		Save(ctx)
 	if err != nil {
@@ -141,22 +164,23 @@ func CreateCars(ctx context.Context, client *ent.Client) (*ent.User, error) {
 	return a8m, nil
 }
 
-func QueryCars(ctx context.Context, a8m *ent.User) error {
-	cars, err := a8m.QueryCars().All(ctx)
+func QueryCars(ctx context.Context, client *ent.Client, name string) ([]*ent.Car, error) {
+	cars, err := client.Car.Query().All(ctx)
+	user, _ := QueryUser(ctx, client, name)
 	if err != nil {
-		return fmt.Errorf("failed querying user cars: %w", err)
+		return nil, fmt.Errorf("failed querying user cars: %w", err)
 	}
 	log.Println("returned cars:", cars)
 
 	// What about filtering specific cars.
-	ford, err := a8m.QueryCars().
+	ford, err := user.QueryCars().
 		Where(car.Model("Ford")).
 		Only(ctx)
 	if err != nil {
-		return fmt.Errorf("failed querying user cars: %w", err)
+		return nil, fmt.Errorf("failed querying user cars: %w", err)
 	}
 	log.Println(ford)
-	return nil
+	return cars, nil
 }
 
 func QueryCarUsers(ctx context.Context, a8m *ent.User) error {
